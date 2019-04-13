@@ -14,7 +14,12 @@ See the License for the specific language governing permissions and
 limitations under the License. */
 
 import Foundation
-import libxml2
+
+#if canImport(libxml2)
+	import libxml2
+#else
+	import CLibXML2
+#endif
 
 
 
