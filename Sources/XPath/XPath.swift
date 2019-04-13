@@ -13,6 +13,10 @@ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 See the License for the specific language governing permissions and
 limitations under the License. */
 
+/* This wrapper has originally been created by Matt Gallagher on 4/08/08.
+ * It has been heavily modified (conversion to swift, better libxml2 nodes to
+ * object conversion, etc.) by François Lamboley. */
+
 import Foundation
 
 #if canImport(libxml2)
