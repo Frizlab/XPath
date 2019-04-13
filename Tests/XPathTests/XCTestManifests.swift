@@ -6,7 +6,7 @@ extension XPathTests {
     //   `swift test --generate-linuxmain`
     // to regenerate.
     static let __allTests__XPathTests = [
-        ("testExample", testExample),
+        ("testSimpleXPath", testSimpleXPath),
     ]
 }
 
