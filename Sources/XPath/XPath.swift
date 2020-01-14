@@ -58,8 +58,8 @@ public struct XPath {
 	}
 	
 	public struct LibXML2AttributeNode {
-		var name: String
-		var value: String
+		public var name: String
+		public var value: String
 	}
 	
 	public static func performXMLXPathQuery(_ query: String, withDocument doc: Data) throws -> [LibXML2Node] {
