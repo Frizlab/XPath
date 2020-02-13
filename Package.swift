@@ -13,7 +13,7 @@ let package = Package(
 		.library(name: "XPath", targets: ["XPath"])
 	],
 	targets: [
-		.target(name: "XPath", dependencies: [] + libxml2Targets.map{ _ in "CLibXML2" }),
+		.target(name: "XPath", dependencies: [] + libxml2Targets.map{ _ in "CLibXML2" }, linkerSettings: [.linkedLibrary("xml2", .when(platforms: [.macOS, .iOS, .watchOS, .tvOS]))]),
 		.testTarget(name: "XPathTests", dependencies: ["XPath"])
 	] + libxml2Targets
 )
