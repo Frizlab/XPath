@@ -27,7 +27,7 @@ import CLibXML2
 
 
 
-public struct XPath {
+public enum XPath {
 	
 	public indirect enum LibXML2Node {
 		
