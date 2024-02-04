@@ -80,19 +80,24 @@ public struct XPath {
 		}
 	}
 	
-	/** 
+	/**
 	 Takes an array of LibXML2Nodes and outputs a string.
-	 Only `.text` and `.cdata` nodes are considered. */
-	public static func textFrom(nodeList: [LibXML2Node]) throws -> String {
+	 Only `.text` and `.cdata` nodes are considered, unless getting text recursively,
+	  in which case text will be retrieved from nodes that have children too. */
+	public static func textFrom(nodeList: [LibXML2Node], recursively: Bool = false) throws -> String {
 		var res = String()
 		for n in nodeList {
 			switch n {
-				case .text(let str):
+				case let .text(str):
 					res += str
 					
-				case .cdata(let data):
+				case let .cdata(data):
 					guard let str = String(data: data, encoding: .utf8) else {throw Error.invalidUTF8}
 					res += str
+					
+				case let .element(_, _, children), let .other(_, _, _, children):
+					guard recursively else {continue}
+					res += try textFrom(nodeList: children, recursively: true)
 					
 				default: (/*nop(ignored)*/)
 			}
