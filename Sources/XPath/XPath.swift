@@ -29,24 +29,6 @@ import CLibXML2
 
 public struct XPath {
 	
-	public enum Error : Swift.Error {
-		
-		case cannotCreateXMLDoc
-		case cannotCreateXPathContext
-		case cannotConvertQueryToCString
-		case cannotEvaluateExpression
-		case textNodeWithNoContent
-		case cdataNodeWithNoContent
-		case elementNodeWithNoName
-		case invalidAttributeNodeInElement
-		case attributeNodeWithNoName
-		case attributeNodeWithNoContent
-		case invalidContentNodeInElement
-		
-		case invalidUTF8
-		
-	}
-	
 	public indirect enum LibXML2Node {
 		
 		case element(name: String, attributes: [LibXML2AttributeNode], children: [LibXML2Node])
@@ -65,7 +47,7 @@ public struct XPath {
 	public static func performXMLXPathQuery(_ query: String, withDocument doc: Data) throws -> [LibXML2Node] {
 		return try doc.withUnsafeBytes{ (bytes: UnsafeRawBufferPointer) -> [LibXML2Node] in
 			let bytes = bytes.bindMemory(to: Int8.self).baseAddress!
-			guard let doc = xmlReadMemory(bytes, Int32(doc.count), "", nil, Int32(XML_PARSE_RECOVER.rawValue)) else {throw Error.cannotCreateXMLDoc}
+			guard let doc = xmlReadMemory(bytes, Int32(doc.count), "", nil, Int32(XML_PARSE_RECOVER.rawValue)) else {throw Err.cannotCreateXMLDoc}
 			defer {xmlFreeDoc(doc)}
 			return try performXPathQuery(query, withDocument: doc)
 		}
@@ -74,7 +56,7 @@ public struct XPath {
 	public static func performHTMLXPathQuery(_ query: String, withDocument doc: Data) throws -> [LibXML2Node] {
 		return try doc.withUnsafeBytes{ (bytes: UnsafeRawBufferPointer) -> [LibXML2Node] in
 			let bytes = bytes.bindMemory(to: Int8.self).baseAddress!
-			guard let doc = htmlReadMemory(bytes, Int32(doc.count), "", nil, Int32(HTML_PARSE_NOWARNING.rawValue | HTML_PARSE_NOERROR.rawValue)) else {throw Error.cannotCreateXMLDoc}
+			guard let doc = htmlReadMemory(bytes, Int32(doc.count), "", nil, Int32(HTML_PARSE_NOWARNING.rawValue | HTML_PARSE_NOERROR.rawValue)) else {throw Err.cannotCreateXMLDoc}
 			defer {xmlFreeDoc(doc)}
 			return try performXPathQuery(query, withDocument: doc)
 		}
@@ -92,7 +74,7 @@ public struct XPath {
 					res += str
 					
 				case let .cdata(data):
-					guard let str = String(data: data, encoding: .utf8) else {throw Error.invalidUTF8}
+					guard let str = String(data: data, encoding: .utf8) else {throw Err.invalidUTF8}
 					res += str
 					
 				case let .element(_, _, children), let .other(_, _, _, children):
@@ -127,7 +109,7 @@ public struct XPath {
 	private static func stringFromXmlCharPtr(_ ptr: UnsafePointer<xmlChar>) throws -> String {
 		/* ptr is a pointer to xmlChar (aka. UInt8).
 		 * We convert it to an opaque pointer to retrieve un unsafe pointer to CChar (aka. Int8). */
-		guard let ret = String(cString: UnsafePointer<CChar>(OpaquePointer(ptr)), encoding: .utf8) else {throw Error.invalidUTF8}
+		guard let ret = String(cString: UnsafePointer<CChar>(OpaquePointer(ptr)), encoding: .utf8) else {throw Err.invalidUTF8}
 		return ret
 	}
 	
@@ -137,7 +119,7 @@ public struct XPath {
 			case XML_ELEMENT_NODE:
 				/* Element name. Mandatory. */
 				let namePtr = node.pointee.name
-				guard let name = try namePtr.flatMap({ try stringFromXmlCharPtr($0) }) else {throw Error.elementNodeWithNoName}
+				guard let name = try namePtr.flatMap({ try stringFromXmlCharPtr($0) }) else {throw Err.elementNodeWithNoName}
 				
 				/* An element node should not have a content.
 				 * (This is why it is not processed here.) */
@@ -150,7 +132,7 @@ public struct XPath {
 					
 					switch try swiftNode(fromXMLNode: UnsafeMutablePointer<_xmlNode>(OpaquePointer(attribute))) {
 						case .attribute(let swiftAttribute): attributes.append(swiftAttribute)
-						default: throw Error.invalidAttributeNodeInElement
+						default: throw Err.invalidAttributeNodeInElement
 					}
 				}
 				
@@ -167,23 +149,23 @@ public struct XPath {
 			case XML_ATTRIBUTE_NODE:
 				/* Element name. Mandatory. */
 				let namePtr = node.pointee.name
-				guard let name = try namePtr.flatMap({ try stringFromXmlCharPtr($0) }) else {throw Error.attributeNodeWithNoName}
+				guard let name = try namePtr.flatMap({ try stringFromXmlCharPtr($0) }) else {throw Err.attributeNodeWithNoName}
 				
 				/* Element value. Mandatory. In the children attribute, as a text node, for whatever reason… */
-				guard let valueNode = node.pointee.children else {throw Error.attributeNodeWithNoContent}
+				guard let valueNode = node.pointee.children else {throw Err.attributeNodeWithNoContent}
 				switch try swiftNode(fromXMLNode: valueNode) {
 					case .text(let text): return .attribute(LibXML2AttributeNode(name: name, value: text))
-					default: throw Error.invalidContentNodeInElement
+					default: throw Err.invalidContentNodeInElement
 				}
 				
 			case XML_TEXT_NODE:
 				/* node.pointee.name == "text" */
-				guard let textContent = node.pointee.content else {throw Error.textNodeWithNoContent}
+				guard let textContent = node.pointee.content else {throw Err.textNodeWithNoContent}
 				return .text(try stringFromXmlCharPtr(textContent))
 				
 			case XML_CDATA_SECTION_NODE:
 				/* node.pointee.name == "cdata-section" */
-				guard let dataContent = node.pointee.content else {throw Error.cdataNodeWithNoContent}
+				guard let dataContent = node.pointee.content else {throw Err.cdataNodeWithNoContent}
 				return .cdata(dataFromXmlCharPtr(dataContent))
 				
 			default:
@@ -206,12 +188,12 @@ public struct XPath {
 	
 	private static func performXPathQuery(_ query: String, withDocument document: xmlDocPtr) throws -> [LibXML2Node] {
 		/* Create XPath evaluation context. */
-		guard let xpathCtx = xmlXPathNewContext(document) else {throw Error.cannotCreateXPathContext}
+		guard let xpathCtx = xmlXPathNewContext(document) else {throw Err.cannotCreateXPathContext}
 		defer {xmlXPathFreeContext(xpathCtx)}
 		
 		/* Evaluate XPath expression. */
-		guard let xmlCharQuery = query.cString(using: .utf8)?.map({ xmlChar($0) }) else {throw Error.cannotConvertQueryToCString}
-		guard let xpathObj = xmlXPathEvalExpression(xmlCharQuery, xpathCtx) else {throw Error.cannotEvaluateExpression}
+		guard let xmlCharQuery = query.cString(using: .utf8)?.map({ xmlChar($0) }) else {throw Err.cannotConvertQueryToCString}
+		guard let xpathObj = xmlXPathEvalExpression(xmlCharQuery, xpathCtx) else {throw Err.cannotEvaluateExpression}
 		defer {xmlXPathFreeObject(xpathObj)}
 		
 		guard let nodes = xpathObj.pointee.nodesetval else {
