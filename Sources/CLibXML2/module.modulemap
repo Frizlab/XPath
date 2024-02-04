@@ -13,13 +13,13 @@ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 See the License for the specific language governing permissions and
 limitations under the License. */
 
+
 module CLibXML2 [system][extern_c] {
-	/* The umbrella below works on Linux, On macOS we have to specify the full
-	 * path to the macOS SDK in Xcode because macOS does not have the headers for
-	 * its libs installed in the system anymore.
-	 * To simplify we use the header instruction which is much easier to use, as
-	 * we don’t need to expose all of the libxml2; only a few headers that we
-	 * import in the libxml2.h file. */
+	/* The umbrella below works on Linux.
+	 * On macOS we have to specify the full path to the macOS SDK in Xcode
+	 *  because macOS does not have the headers for its libs installed in the system anymore.
+	 * To simplify we use the header instruction which is much easier to use, as we don’t need to expose all of the libxml2;
+	 *  only a few headers that we import in the libxml2.h file. */
 //	umbrella "/usr/include/libxml2"
 	header "libxml2.h"
 	link "xml2"
